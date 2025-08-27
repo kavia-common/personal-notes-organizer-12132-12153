@@ -1,47 +1,77 @@
-# Astro Starter Kit: Minimal
+# Notes Frontend (Astro)
 
-```sh
-npm create astro@latest -- --template minimal
+A modern, minimalistic light-themed Notes app built with Astro. Users can:
+- Create notes
+- Edit notes
+- Delete notes
+- List/View notes
+- Search notes
+
+The app is backend-ready and will interface with a `notes_database` service via a simple REST API when available. Until then, it uses a robust localStorage mock so the UI works fully offline.
+
+## Getting Started
+
+Install dependencies and run the dev server:
+
+```bash
+npm install
+npm run dev
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+Build for production:
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```bash
+npm run build
+npm run preview
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Project Structure
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```
+src/
+  components/
+    Header.astro
+    NoteCard.astro
+    NoteEditorModal.astro
+    NotesList.astro
+    Sidebar.astro
+    ThemeToggle.astro
+  layouts/
+    Layout.astro
+  pages/
+    index.astro
+  services/
+    api.ts
+  state/
+    store.ts
+  styles/
+    theme.css
+  types.ts
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+## API Integration
 
-## 🧞 Commands
+By default, the app uses a localStorage-backed mock API. To connect a backend:
 
-All commands are run from the root of the project, from a terminal:
+- Provide an environment variable `NOTES_API_BASE` at build/runtime (e.g., via Astro adapter env) or set `window.__NOTES_API_BASE__` before scripts run. Example expected endpoints:
+  - GET    {NOTES_API_BASE}/notes?query=...
+  - GET    {NOTES_API_BASE}/notes/:id
+  - POST   {NOTES_API_BASE}/notes
+  - PATCH  {NOTES_API_BASE}/notes/:id
+  - DELETE {NOTES_API_BASE}/notes/:id
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+If network requests fail or are not configured, the app falls back to the mock API seamlessly.
 
-## 👀 Want to learn more?
+## Keyboard Shortcuts
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- Cmd/Ctrl + K: focus the search box.
+- Cmd/Ctrl + Enter: save note in the editor.
+- Esc: close the editor.
+
+## Theming
+
+Primary: #3b82f6
+Secondary: #64748b
+Accent: #f59e42
+
+Global CSS variables and styles are in `src/styles/theme.css`.
