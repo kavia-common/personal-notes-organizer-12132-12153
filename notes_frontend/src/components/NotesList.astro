@@ -1,0 +1,11 @@
+---
+import NoteCard from "./NoteCard.astro";
+const { notes = [] } = Astro.props as { notes: any[] };
+---
+{notes.length === 0 ? (
+  <div class="empty">No notes yet. Create a new note to get started.</div>
+) : (
+  <section class="note-grid">
+    {notes.map((n) => <NoteCard note={n} />)}
+  </section>
+)}

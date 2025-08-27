@@ -1,0 +1,133 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Sidebar from "../components/Sidebar.astro";
+import NotesList from "../components/NotesList.astro";
+import NoteEditorModal from "../components/NoteEditorModal.astro";
+import "../styles/theme.css";
+---
+
+<Layout>
+  <div class="container">
+    <Header />
+    <Sidebar />
+    <main class="main">
+      <div id="notes-root">
+        <!-- Notes grid populated by client script -->
+        <div class="empty">Loading notes…</div>
+      </div>
+    </main>
+  </div>
+  <NoteEditorModal />
+</Layout>
+
+<script type="module">
+  import { store } from "../state/store.ts";
+
+  const root = document.getElementById('notes-root');
+
+  function render() {
+    const notes = store.notes;
+    // Hydrate using server-rendered component by building HTML here
+    if (!notes.length) {
+      root.innerHTML = '<div class="empty">No notes match your search. Try creating a new one.</div>';
+      return;
+    }
+    const items = notes.map((n) => {
+      const tags = n.tags && n.tags.length ? `<span>•</span> <span>${n.tags.join(", ")}</span>` : "";
+      const updated = new Date(n.updatedAt).toLocaleString();
+      return `
+      <article class="note-card" data-id="${n.id}">
+        <h3 class="note-title">${escapeHtml(n.title || "Untitled")}</h3>
+        <div class="note-meta">
+          <span>Updated ${escapeHtml(updated)}</span>
+          ${tags}
+        </div>
+        <div class="note-body">${escapeHtml(n.content)}</div>
+        <div class="note-actions">
+          <button class="btn secondary btn-edit" type="button">Edit</button>
+          <button class="btn ghost btn-delete" type="button">Delete</button>
+        </div>
+      </article>
+      `;
+    }).join("");
+
+    root.innerHTML = `<section class="note-grid">${items}</section>`;
+    // bind buttons
+    root.querySelectorAll('.btn-edit').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const card = (e.target as HTMLElement).closest('.note-card');
+        const id = card?.getAttribute('data-id');
+        window.dispatchEvent(new CustomEvent('open-editor', { detail: { id } }));
+      });
+    });
+    root.querySelectorAll('.btn-delete').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const card = (e.target as HTMLElement).closest('.note-card');
+        const id = card?.getAttribute('data-id');
+        window.dispatchEvent(new CustomEvent('request-delete', { detail: { id } }));
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    return (str ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // Initial load and subscribe for changes
+  store.subscribe(render);
+  store.refresh();
+
+  // Listen to search updates from Sidebar
+  window.addEventListener('search-change', (e) => {
+    const q = e.detail?.query ?? "";
+    store.setQuery(q);
+  });
+
+  // Handle open-editor to load data for edit
+  window.addEventListener('open-editor', async (e) => {
+    const id = e.detail?.id;
+    if (!id) {
+      // creating
+      window.dispatchEvent(new CustomEvent('editor-set-data', { detail: { note: { title: "", content: "", tags: [] }}}));
+      return;
+    }
+    const note = await store.loadOne(id);
+    window.dispatchEvent(new CustomEvent('editor-set-data', { detail: { note }}));
+  });
+
+  // Save note from modal
+  window.addEventListener('save-note', async (e) => {
+    const { id, title, content, tags } = e.detail || {};
+    try {
+      if (id) {
+        await store.update(id, { title, content, tags });
+      } else {
+        await store.create({ title, content, tags });
+      }
+      window.dispatchEvent(new CustomEvent('close-editor'));
+    } catch (err) {
+      alert('Failed to save note.');
+      console.error(err);
+    }
+  });
+
+  // Delete confirmation
+  window.addEventListener('request-delete', async (e) => {
+    const { id } = e.detail || {};
+    if (!id) return;
+    const ok = confirm('Delete this note? This cannot be undone.');
+    if (!ok) return;
+    try {
+      await store.remove(id);
+    } catch (err) {
+      alert('Failed to delete note.');
+      console.error(err);
+    }
+  });
+</script>

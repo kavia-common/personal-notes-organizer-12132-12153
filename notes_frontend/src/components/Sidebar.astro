@@ -1,0 +1,45 @@
+---
+/**
+ * Sidebar.astro
+ * Provides search input and simple "All" filter. Emits custom events for parent handling.
+ * Props:
+ *  - query: string (current search query)
+ *  - onSearch: will be handled via client-side script using CustomEvent 'search-change'
+ */
+const { query = "" } = Astro.props as { query?: string };
+---
+<aside class="sidebar">
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="#94a3b8" d="M21 20l-5.6-5.6a7 7 0 1 0-1.4 1.4L20 21zM5 10a5 5 0 1 1 10 0A5 5 0 0 1 5 10z"/>
+    </svg>
+    <input id="search-input" type="search" placeholder="Search notes..." value={query} />
+  </div>
+
+  <div class="filters">
+    <button class="chip active" data-filter="all" type="button" aria-pressed="true">All</button>
+  </div>
+</aside>
+
+<script>
+  // Emit custom event when search query changes; parent listens to update results.
+  const input = document.getElementById('search-input');
+  function emitSearch() {
+    const q = input.value;
+    window.dispatchEvent(new CustomEvent('search-change', { detail: { query: q } }));
+  }
+  input?.addEventListener('input', () => {
+    // debounce typing
+    window.clearTimeout((window).__searchTimer);
+    (window).__searchTimer = window.setTimeout(emitSearch, 120);
+  });
+
+  // Keyboard shortcut: Cmd/Ctrl+K to focus search
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      input?.focus();
+      input?.select();
+    }
+  });
+</script>

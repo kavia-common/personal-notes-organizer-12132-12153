@@ -1,0 +1,20 @@
+---
+const { onNew } = Astro.props;
+---
+<header class="header">
+  <div class="title">Personal Notes</div>
+  <div class="actions">
+    <button id="new-note-btn" class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
+      New Note
+    </button>
+  </div>
+</header>
+
+<script>
+  // Emits open-editor event to open the modal editor for creating a note.
+  const btn = document.getElementById('new-note-btn');
+  btn?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('open-editor', { detail: { id: null }}));
+  });
+</script>
